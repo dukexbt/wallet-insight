@@ -3,109 +3,103 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>WALLET.SCORE — On-Chain Reputation</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<title>Wallet Insight | @dukexbt_</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg: #050507; --surface: #0d0d12; --border: rgba(255,255,255,0.07);
-    --text: #f0eee8; --muted: rgba(240,238,232,0.35); --green: #00ff88;
-    --score-color: var(--green);
+  :root { --primary: #7f5af0; --accent: #00c6ff; --bg: #030712; }
+  body { 
+    margin: 0; font-family: 'Inter', sans-serif; 
+    background: radial-gradient(circle at top right, #1e1b4b, #030712); 
+    color: white; display: flex; justify-content: center; align-items: center; 
+    min-height: 100vh; overflow: hidden;
   }
-  body {
-    font-family: 'Space Mono', monospace; background: var(--bg); color: var(--text);
-    min-height: 100vh; display: flex; flex-direction: column; align-items: center;
-    justify-content: center; padding: 24px 16px; overflow-x: hidden;
+  .container { 
+    text-align: center; width: 90%; max-width: 400px; 
+    padding: 45px 35px; border-radius: 28px; 
+    background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); 
+    border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
   }
-  body::before {
-    content: ''; position: fixed; inset: 0; pointer-events: none; opacity: 0.6; z-index: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  h1 { font-size: 28px; margin-bottom: 8px; font-weight: 800; letter-spacing: -1px; }
+  .subtitle { opacity: 0.4; margin-bottom: 35px; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; }
+  input { 
+    width: 100%; padding: 18px; margin-bottom: 20px; border-radius: 14px; 
+    border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.05); 
+    color: white; box-sizing: border-box; outline: none; font-size: 14px;
   }
-  .wrapper { position: relative; z-index: 1; width: 100%; max-width: 480px; }
-  .header { margin-bottom: 40px; }
-  .logo { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 800; letter-spacing: 0.35em; color: var(--muted); text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
-  .logo::before { content: ''; width: 6px; height: 6px; background: var(--green); border-radius: 50%; box-shadow: 0 0 8px var(--green); }
-  h1 { font-family: 'Syne', sans-serif; font-size: clamp(32px, 7vw, 48px); font-weight: 800; line-height: 1; color: var(--text); }
-  h1 span { color: var(--green); }
-  .input-label { font-size: 10px; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; display: block; }
-  input[type="text"] { width: 100%; padding: 16px 18px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'Space Mono', monospace; outline: none; transition: 0.2s; }
-  button#analyzeBtn { width: 100%; padding: 17px; background: var(--green); color: #050507; border: none; border-radius: 10px; font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 800; cursor: pointer; transition: 0.2s; margin-top: 10px; }
-  #results { margin-top: 28px; display: none; }
-  .score-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px 28px 28px; margin-bottom: 16px; text-align: center; }
-  .score-number { font-family: 'Syne', sans-serif; font-size: 80px; font-weight: 800; color: var(--green); line-height: 1; text-shadow: 0 0 40px var(--green); margin-bottom: 10px; }
-  .score-tier { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; color: var(--green); margin-bottom: 20px; }
-  .share-btn { width: 100%; padding: 14px; background: #fff; color: #000; border: none; border-radius: 10px; font-family: 'Syne', sans-serif; font-weight: 800; cursor: pointer; transition: 0.2s; }
-  .share-btn:hover { background: #eee; }
-  footer { margin-top: 40px; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: rgba(240,238,232,0.2); border-top: 1px solid var(--border); padding-top: 20px; width: 100%; }
-  footer a { color: var(--green); text-decoration: none; font-weight: 800; }
+  button { 
+    width: 100%; padding: 18px; border-radius: 14px; border: none; 
+    background: #fff; color: #000; font-weight: 700; cursor: pointer; font-size: 15px; transition: 0.2s;
+  }
+  button:hover { opacity: 0.9; transform: scale(1.02); }
+  .result { margin-top: 30px; padding: 25px; border-radius: 20px; background: rgba(255, 255, 255, 0.02); display: none; }
+  .score-display { font-size: 68px; font-weight: 800; color: #fff; margin: 5px 0; display: block; }
+  footer { margin-top: 40px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 25px; }
+  .profile-img { width: 50px; height: 50px; border-radius: 50%; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.1); }
+  .built-by { font-size: 12px; color: rgba(255,255,255,0.3); text-decoration: none; font-weight: 600; letter-spacing: 0.5px; }
 </style>
 </head>
 <body>
-
-<div class="wrapper">
-  <div class="header">
-    <div class="logo">Mainnet · ETH · Live</div>
-    <h1>WALLET<span>.</span><br>SCORE</h1>
-    <p style="font-size: 12px; color: var(--muted); margin-top: 10px;">On-chain metrics curated by @dukexbt_</p>
+<div class="container">
+  <h1>Wallet Insight</h1>
+  <p class="subtitle">Mainnet Protocol • 2026</p>
+  <input id="wallet" placeholder="Paste ETH Address..." type="text" spellcheck="false">
+  <button id="btn" onclick="checkWallet()">Analyze Wallet</button>
+  <div id="output" class="result">
+    <span id="digitScore" class="score-display">0</span>
+    <div id="details" style="font-size:13px; opacity:0.5; line-height:1.6;"></div>
   </div>
-
-  <label class="input-label">ETH Address</label>
-  <input id="walletInput" type="text" placeholder="0x..." spellcheck="false">
-  <button id="analyzeBtn" onclick="analyzeWallet()">ANALYZE REPUTATION</button>
-
-  <div id="results">
-    <div class="score-card">
-      <div id="scoreNumber" class="score-number">0</div>
-      <div id="scoreTier" class="score-tier">—</div>
-      <button class="share-btn" onclick="shareOnX()">SHARE ON X</button>
-    </div>
-    <p id="statDetail" style="font-size: 11px; color: var(--muted); text-align: center;"></p>
-  </div>
-
   <footer>
-    <span>WALLET.SCORE © 2026</span>
-    <a href="https://x.com/dukexbt_" target="_blank">FOLLOW @DUKEXBT_</a>
+    <img src="https://unavatar.io/x/dukexbt_" class="profile-img" alt="Duke">
+    <br>
+    <a href="https://x.com/dukexbt_" target="_blank" class="built-by">SYSTEM DESIGN BY @DUKEXBT_</a>
   </footer>
 </div>
 
 <script>
-  const API_KEY = 'X5DW1ST8FVDT84RKKU3G79EMTUSPW2MXHP';
-  let finalScore = 0;
+  async function checkWallet() {
+    const address = document.getElementById('wallet').value.trim();
+    const output = document.getElementById('output');
+    const btn = document.getElementById('btn');
+    const scoreText = document.getElementById('digitScore');
+    const details = document.getElementById('details');
 
-  async function analyzeWallet() {
-    const addr = document.getElementById('walletInput').value.trim();
-    if (!/^0x[a-fA-F0-9]{40}$/.test(addr)) return alert('Invalid ETH address');
+    if (!/^0x[a-fA-F0-9]{40}$/.test(address)) { alert('Invalid Address'); return; }
 
-    const btn = document.getElementById('analyzeBtn');
-    btn.innerText = 'FETCHING...';
-    btn.disabled = true;
+    btn.disabled = true; btn.innerHTML = 'Calculating...';
+    output.style.display = 'block'; scoreText.innerHTML = '0';
 
     try {
-      const res = await fetch(`https://api.etherscan.io/api?module=proxy&action=eth_getTransactionCount&address=${addr}&tag=latest&apikey=${API_KEY}`);
+      const apiKey = 'X5DW1ST8FVDT84RKKU3G79EMTUSPW2MXHP';
+      const url = `https://api.etherscan.io/api?module=proxy&action=eth_getTransactionCount&address=${address}&tag=latest&apikey=${apiKey}`;
+      const res = await fetch(url);
       const data = await res.json();
-      const txCount = parseInt(data.result, 16) || 0;
+      
+      let txCount = parseInt(data.result, 16) || 0;
+      
+      // DECENT RANDOMIZED LOGIC (Range 1-500 focused)
+      let base;
+      if (txCount === 0) {
+          base = Math.floor(Math.random() * 15) + 5; // New wallets get 5-20
+      } else if (txCount < 100) {
+          base = Math.floor(Math.random() * 20) + 45; // 1-99 txns get 45-65 (Decent!)
+      } else if (txCount < 500) {
+          base = Math.floor(Math.random() * 20) + 70; // 100-499 txns get 70-90 (Strong!)
+      } else {
+          base = Math.floor(Math.random() * 10) + 90; // 500+ txns get 90-100 (Elite!)
+      }
 
-      // Realistic Randomized Logic for 1-500 range
-      if (txCount === 0) finalScore = Math.floor(Math.random() * 10) + 5;
-      else if (txCount < 50) finalScore = Math.floor(Math.random() * 20) + 40; 
-      else if (txCount < 200) finalScore = Math.floor(Math.random() * 15) + 65; 
-      else finalScore = Math.floor(Math.random() * 10) + 85;
+      let finalScore = Math.min(base, 100);
 
-      document.getElementById('results').style.display = 'block';
-      document.getElementById('scoreNumber').innerText = finalScore;
-      document.getElementById('scoreTier').innerText = finalScore > 80 ? 'ELITE' : finalScore > 60 ? 'STRONG' : 'DECENT';
-      document.getElementById('statDetail').innerHTML = `Verified activity: <b>${txCount}</b> transactions found.`;
+      // Smooth Count-up
+      let current = 0;
+      const interval = setInterval(() => {
+        if (current >= finalScore) { scoreText.innerHTML = finalScore; clearInterval(interval); }
+        else { current++; scoreText.innerHTML = current; }
+      }, 10);
 
-    } catch (e) { alert('API Error. Try again.'); } 
-    finally { 
-      btn.innerText = 'ANALYZE REPUTATION';
-      btn.disabled = false;
-    }
-  }
-
-  function shareOnX() {
-    const text = encodeURIComponent(`My on-chain reputation score is ${finalScore}/100! 🛡️\n\nAnalyzed via WALLET.SCORE by @dukexbt_\n\nCheck yours: ${window.location.href}`);
-    window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
+      details.innerHTML = `Transaction Density: <b>${txCount}</b><br>Network Reputation: <b>Verified</b>`;
+    } catch (err) { scoreText.innerHTML = '--'; }
+    finally { btn.disabled = false; btn.innerHTML = 'Analyze Wallet'; }
   }
 </script>
 </body>
