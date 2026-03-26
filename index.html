@@ -1,23 +1,561 @@
-<!-- Footer with X account -->
-<footer>
-  <span>WALLET.SCORE © 2026</span>
-  <div class="footer-dot"></div>
-  <a href="https://x.com/dukexbt_" target="_blank">@DUKEXBT_</a>
-  <div class="footer-dot"></div>
-  <a href="https://x.com/dukexbt_" target="_blank">Follow me on X</a>
-</footer>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WALLET.SCORE — On-Chain Reputation</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-<!-- Obfuscated API key -->
+  :root {
+    --bg: #050507;
+    --surface: #0d0d12;
+    --border: rgba(255,255,255,0.07);
+    --text: #f0eee8;
+    --muted: rgba(240,238,232,0.35);
+    --green: #00ff88;
+    --amber: #ffb800;
+    --red: #ff4455;
+    --blue: #4af0ff;
+    --score-color: var(--green);
+  }
+
+  body {
+    font-family: 'Space Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+    overflow-x: hidden;
+  }
+
+  /* Noise overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.6;
+  }
+
+  /* Glow blobs */
+  .blob {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(120px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .blob-1 { width: 500px; height: 500px; background: rgba(0,255,136,0.04); top: -150px; right: -100px; }
+  .blob-2 { width: 400px; height: 400px; background: rgba(74,240,255,0.03); bottom: -100px; left: -100px; }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 480px;
+  }
+
+  /* Header */
+  .header {
+    margin-bottom: 40px;
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.35em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo::before {
+    content: '';
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(32px, 7vw, 48px);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--text);
+  }
+
+  h1 span { color: var(--green); }
+
+  .sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 10px;
+    line-height: 1.6;
+  }
+
+  /* Input area */
+  .input-group {
+    position: relative;
+    margin-bottom: 14px;
+  }
+
+  .input-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  input[type="text"] {
+    width: 100%;
+    padding: 16px 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    letter-spacing: 0.02em;
+  }
+
+  input[type="text"]:focus {
+    border-color: rgba(0,255,136,0.3);
+    box-shadow: 0 0 0 3px rgba(0,255,136,0.06);
+  }
+
+  input[type="text"]::placeholder { color: rgba(240,238,232,0.2); }
+
+  button#analyzeBtn {
+    width: 100%;
+    padding: 17px;
+    background: var(--green);
+    color: #050507;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: transform 0.15s, opacity 0.15s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  button#analyzeBtn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(0,255,136,0.25);
+  }
+
+  button#analyzeBtn:active:not(:disabled) { transform: translateY(0); }
+
+  button#analyzeBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  button#analyzeBtn .btn-text { position: relative; z-index: 1; }
+
+  /* Scan line on button */
+  button#analyzeBtn::after {
+    content: '';
+    position: absolute;
+    top: -100%;
+    left: 0; right: 0;
+    height: 100%;
+    background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.12), transparent);
+    transition: top 0.4s;
+  }
+
+  button#analyzeBtn:hover::after { top: 100%; }
+
+  /* Results */
+  #results {
+    margin-top: 28px;
+    display: none;
+    animation: fadeUp 0.4s ease;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Big score card */
+  .score-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px 28px 28px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .score-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(to right, transparent, var(--score-color), transparent);
+    transition: background 0.5s;
+  }
+
+  .score-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .score-number {
+    font-family: 'Syne', sans-serif;
+    font-size: 80px;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--score-color);
+    text-shadow: 0 0 40px var(--score-color);
+    transition: color 0.5s, text-shadow 0.5s;
+    letter-spacing: -0.04em;
+  }
+
+  .score-right {
+    text-align: right;
+    padding-bottom: 6px;
+  }
+
+  .score-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .score-tier {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--score-color);
+    transition: color 0.5s;
+  }
+
+  /* Progress bar */
+  .bar-track {
+    width: 100%;
+    height: 6px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 99px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: var(--score-color);
+    box-shadow: 0 0 12px var(--score-color);
+    transition: width 0.8s cubic-bezier(0.4,0,0.2,1), background 0.5s, box-shadow 0.5s;
+    width: 0%;
+  }
+
+  /* Wallet address display */
+  .wallet-tag {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    word-break: break-all;
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+  }
+
+  /* Stats grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .stat-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 16px;
+    transition: border-color 0.2s;
+  }
+
+  .stat-box:hover { border-color: rgba(255,255,255,0.12); }
+
+  .stat-name {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .stat-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .stat-val.positive { color: var(--green); }
+  .stat-val.neutral  { color: var(--blue); }
+  .stat-val.warning  { color: var(--amber); }
+
+  /* Breakdown rows */
+  .breakdown {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+
+  .breakdown-title {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .breakdown-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+
+  .breakdown-row:last-child { border-bottom: none; }
+
+  .br-label { font-size: 12px; color: var(--muted); }
+
+  .br-score {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .br-bar {
+    width: 60px;
+    height: 3px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .br-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: var(--green);
+    transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  /* Error */
+  .error-box {
+    background: rgba(255,68,85,0.06);
+    border: 1px solid rgba(255,68,85,0.2);
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 12px;
+    color: var(--red);
+    margin-top: 14px;
+    display: none;
+  }
+
+  /* Loader dots */
+  .loader {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+  }
+
+  .loader span {
+    width: 5px; height: 5px;
+    background: #050507;
+    border-radius: 50%;
+    animation: bounce 0.8s ease-in-out infinite;
+  }
+
+  .loader span:nth-child(2) { animation-delay: 0.15s; }
+  .loader span:nth-child(3) { animation-delay: 0.3s; }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+
+  /* Footer */
+  footer {
+    margin-top: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    color: rgba(240,238,232,0.2);
+    border-top: 1px solid var(--border);
+    padding-top: 20px;
+  }
+
+  footer a {
+    color: rgba(240,238,232,0.35);
+    text-decoration: none;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    transition: color 0.2s;
+  }
+
+  footer a:hover { color: var(--text); }
+
+  .footer-dot {
+    width: 4px; height: 4px;
+    background: rgba(240,238,232,0.15);
+    border-radius: 50%;
+  }
+</style>
+</head>
+<body>
+
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+
+<div class="wrapper">
+  <div class="header">
+    <div class="logo">Mainnet · ETH · Live</div>
+    <h1>WALLET<span>.</span><br>SCORE</h1>
+    <p class="sub">On-chain reputation analysis powered by<br>Etherscan data. No wallet connection needed.</p>
+  </div>
+
+  <label class="input-label" for="walletInput">ETH Address</label>
+  <div class="input-group">
+    <input
+      id="walletInput"
+      type="text"
+      placeholder="0x..."
+      spellcheck="false"
+      autocomplete="off"
+    />
+  </div>
+
+  <button id="analyzeBtn" onclick="analyzeWallet()">
+    <span class="btn-text">ANALYZE WALLET</span>
+  </button>
+
+  <div id="errorBox" class="error-box"></div>
+
+  <div id="results">
+    <div class="score-card">
+      <div class="score-row">
+        <div id="scoreNumber" class="score-number">0</div>
+        <div class="score-right">
+          <div class="score-label">Reputation Tier</div>
+          <div id="scoreTier" class="score-tier">—</div>
+        </div>
+      </div>
+      <div class="bar-track">
+        <div id="barFill" class="bar-fill"></div>
+      </div>
+      <div id="walletTag" class="wallet-tag"></div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-name">Total TXs</div>
+        <div id="statTx" class="stat-val neutral">—</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-name">Unique Days</div>
+        <div id="statDays" class="stat-val neutral">—</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-name">Wallet Age</div>
+        <div id="statAge" class="stat-val neutral">—</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-name">ETH Balance</div>
+        <div id="statBal" class="stat-val neutral">—</div>
+      </div>
+    </div>
+
+    <div class="breakdown">
+      <div class="breakdown-title">Score Breakdown</div>
+      <div class="breakdown-row">
+        <span class="br-label">Activity Volume</span>
+        <div class="br-score">
+          <div class="br-bar"><div id="b1" class="br-fill" style="width:0%"></div></div>
+          <span id="b1v">0</span>
+        </div>
+      </div>
+      <div class="breakdown-row">
+        <span class="br-label">Consistency</span>
+        <div class="br-score">
+          <div class="br-bar"><div id="b2" class="br-fill" style="width:0%"></div></div>
+          <span id="b2v">0</span>
+        </div>
+      </div>
+      <div class="breakdown-row">
+        <span class="br-label">Wallet Age</span>
+        <div class="br-score">
+          <div class="br-bar"><div id="b3" class="br-fill" style="width:0%"></div></div>
+          <span id="b3v">0</span>
+        </div>
+      </div>
+      <div class="breakdown-row">
+        <span class="br-label">Balance Health</span>
+        <div class="br-score">
+          <div class="br-bar"><div id="b4" class="br-fill" style="width:0%"></div></div>
+          <span id="b4v">0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <span>WALLET.SCORE © 2026</span>
+    <div class="footer-dot"></div>
+    <a href="https://x.com/dukexbt_" target="_blank">@DUKEXBT_</a>
+  </footer>
+</div>
+
 <script>
-  // Split + Base64 trick to hide key
-  const part1 = 'WDVEVzFTVDhG';
-  const part2 = 'VkRUIDg0UktL';
-  const part3 = 'VTM3OUVNVFRV';
-  const part4 = 'U1BXMk1YSFA=';
-  const API_KEY = atob(part1 + part2 + part3 + part4);
+  const API_KEY = 'X5DW1ST8FVDT84RKKU3G79EMTUSPW2MXHP';
   const BASE = 'https://api.etherscan.io/api';
 
-  // Your original functions below — unchanged
   function $(id) { return document.getElementById(id); }
 
   function scoreColor(score) {
@@ -64,6 +602,7 @@
     const res = await fetch(url.toString());
     if (!res.ok) throw new Error(`HTTP ${res.status}: Network error`);
     const data = await res.json();
+    // Rate limit hit
     if (data.result === 'Max rate limit reached') throw new Error('Rate limit reached — wait a moment and try again.');
     return data;
   }
@@ -83,10 +622,14 @@
     $('results').style.display = 'none';
 
     try {
+      // 1. Fetch balance
       const balData = await etherscan({ module: 'account', action: 'balance', address, tag: 'latest' });
+      // status "1" = success, anything else treat as 0
       const balWei = (balData.status === '1' || balData.result) ? (parseInt(balData.result) || 0) : 0;
       const balEth = balWei / 1e18;
 
+      // 2. Fetch transaction list (sorted asc to get first tx date)
+      // status "0" with "No transactions found" is VALID for new wallets — not an error
       const txData = await etherscan({
         module: 'account',
         action: 'txlist',
@@ -98,10 +641,14 @@
         sort: 'asc'
       });
 
+      // Safely extract list — empty wallet returns result as "0" or [] 
       const txList = Array.isArray(txData.result) ? txData.result : [];
+
+      // 3. Outgoing tx count via nonce
       const nonceData = await etherscan({ module: 'proxy', action: 'eth_getTransactionCount', address, tag: 'latest' });
       const outgoingCount = nonceData.result ? (parseInt(nonceData.result, 16) || 0) : 0;
 
+      // 4. Compute unique active days
       const daySet = new Set();
       txList.forEach(tx => {
         const d = new Date(parseInt(tx.timeStamp) * 1000);
@@ -109,6 +656,7 @@
       });
       const uniqueDays = daySet.size;
 
+      // 5. Wallet age in days
       let ageDays = 0;
       let ageLabel = '< 1 day';
       if (txList.length > 0) {
@@ -119,12 +667,15 @@
         else ageLabel = `${ageDays}d`;
       }
 
+      // === SCORE CALCULATION (out of 100) ===
+      // Activity Volume: 0–30 pts
       let activityScore = 0;
       if (outgoingCount >= 500) activityScore = 30;
       else if (outgoingCount >= 100) activityScore = Math.round(20 + (outgoingCount - 100) / 400 * 10);
       else if (outgoingCount >= 20)  activityScore = Math.round(10 + (outgoingCount - 20) / 80 * 10);
       else if (outgoingCount >= 1)   activityScore = Math.round(3 + (outgoingCount / 20) * 7);
 
+      // Consistency (unique days relative to age): 0–25 pts
       let consistencyScore = 0;
       if (ageDays > 0) {
         const ratio = uniqueDays / Math.min(ageDays, 365);
@@ -133,6 +684,7 @@
         consistencyScore = 10;
       }
 
+      // Wallet age: 0–25 pts
       let ageScore = 0;
       if (ageDays >= 1095) ageScore = 25;
       else if (ageDays >= 730) ageScore = 22;
@@ -142,6 +694,7 @@
       else if (ageDays >= 14)  ageScore = 4;
       else if (ageDays >= 1)   ageScore = 2;
 
+      // Balance health: 0–20 pts
       let balScore = 0;
       if (balEth >= 10)   balScore = 20;
       else if (balEth >= 1)   balScore = 16;
@@ -153,20 +706,29 @@
       const color = scoreColor(finalScore);
       const tier = scoreTier(finalScore);
 
+      // -- Render --
       $('results').style.display = 'block';
+
+      // Update score color CSS var on card
       document.querySelector('.score-card').style.setProperty('--score-color', color);
       $('scoreNumber').style.color = color;
       $('scoreNumber').style.textShadow = `0 0 40px ${color}`;
       $('scoreTier').style.color = color;
       document.querySelector('.bar-fill').style.background = color;
       document.querySelector('.bar-fill').style.boxShadow = `0 0 12px ${color}`;
+      document.querySelector('.score-card::before'); // already handled via CSS var
 
+      // Animate score
       countUp($('scoreNumber'), finalScore, 1000);
       $('scoreTier').textContent = tier;
 
+      // Bar
       setTimeout(() => { $('barFill').style.width = finalScore + '%'; }, 100);
+
+      // Wallet tag
       $('walletTag').textContent = address;
 
+      // Stats
       $('statTx').textContent = outgoingCount > 0 ? outgoingCount.toLocaleString() + '+' : txList.length.toString();
       $('statTx').className = 'stat-val ' + (outgoingCount >= 100 ? 'positive' : 'neutral');
 
@@ -179,6 +741,7 @@
       $('statBal').textContent = balEth >= 0.001 ? balEth.toFixed(4) + ' ETH' : '< 0.001 ETH';
       $('statBal').className = 'stat-val ' + (balEth >= 1 ? 'positive' : balEth > 0 ? 'neutral' : 'warning');
 
+      // Breakdown bars
       setTimeout(() => {
         $('b1').style.width = (activityScore / 30 * 100) + '%';
         $('b2').style.width = (consistencyScore / 25 * 100) + '%';
@@ -200,7 +763,10 @@
     }
   }
 
+  // Allow Enter key
   $('walletInput').addEventListener('keydown', e => {
     if (e.key === 'Enter') analyzeWallet();
   });
 </script>
+</body>
+</html>
