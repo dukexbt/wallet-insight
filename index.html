@@ -19,6 +19,7 @@
     const scoreBar = document.getElementById('scoreBar');
     const tierBadge = document.getElementById('tierBadge');
     const inp = document.getElementById('wallet');
+    const statClass = document.getElementById('statClass');
 
     // Basic Ethereum Address Validation
     if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
@@ -35,13 +36,14 @@
     btn.textContent = 'Scanning...';
     output.style.display = 'block';
     scoreEl.textContent = '—';
+    scoreEl.style.fontSize = '80px'; // Reset font size in case it was changed by error
     scoreBar.style.width = '0%';
     tierBadge.textContent = '';
     document.getElementById('timestamp').textContent = new Date().toISOString().slice(11,19) + ' UTC';
     document.getElementById('statTx').textContent = '—';
     document.getElementById('statStatus').textContent = '—';
     document.getElementById('statBalance').textContent = '—';
-    document.getElementById('statClass').textContent = '—';
+    statClass.textContent = '—';
 
     try {
       // ---------------------------------------------------------
@@ -54,12 +56,11 @@
       const txRes = await fetch(txUrl);
       const txData = await txRes.json();
       
-      // Catch Etherscan API Errors (e.g., Invalid API key)
-      if (txData.status === "0" || txData.message === "NOTOK") {
-          throw new Error(txData.result || "Etherscan API blocked the request.");
+      // DEBUG CHECK 1: Did Etherscan return an error for the TX call?
+      if (txData.error || (txData.status === "0" && txData.message !== "No transactions found")) {
+          throw new Error("TX API Blocked: " + (txData.result || txData.message || JSON.stringify(txData)));
       }
 
-      // Convert hex result to integer
       const txCount = parseInt(txData.result, 16) || 0;
 
       // 2. Fetch ETH Balance
@@ -67,16 +68,17 @@
       const balRes = await fetch(balUrl);
       const balData = await balRes.json();
       
+      // DEBUG CHECK 2: Did Etherscan return an error for the Balance call?
       if (balData.status === "0" && balData.message === "NOTOK") {
-          throw new Error(balData.result);
+          throw new Error("Bal API Blocked: " + balData.result);
       }
 
       const balanceWei = balData.result || 0;
-      const balanceEth = balanceWei / 1e18; // Convert Wei to ETH
+      const balanceEth = balanceWei / 1e18; 
 
       // --- ALGORITHM LOGIC ---
       let txScore = 0;
-      if (txCount >= 250) txScore = 55;
+      if (txCount >= 500) txScore = 50;
       else if (txCount >= 50) txScore = 25 + ((txCount - 50) / 450) * 25; 
       else txScore = (txCount / 50) * 25;
 
@@ -85,7 +87,6 @@
       else if (balanceEth >= 1) volScore = 25 + ((balanceEth - 1) / 9) * 25; 
       else volScore = (balanceEth / 1) * 25;
 
-      // Combine and cap between 0 and 100
       const finalScore = Math.min(Math.max(Math.round(txScore + volScore), 0), 100);
       const tier = getTier(finalScore);
 
@@ -97,7 +98,6 @@
         scoreEl.textContent = current;
         if (current >= finalScore) {
           clearInterval(interval);
-          // Animate the progress bar and badge
           setTimeout(() => {
             scoreBar.style.width = finalScore + '%';
             scoreEl.style.color = tier.color;
@@ -110,32 +110,31 @@
         }
       }, 18);
 
-      // Populate Stats
       document.getElementById('statTx').textContent = txCount.toLocaleString();
       document.getElementById('statStatus').textContent = 'VERIFIED ✓';
       document.getElementById('statStatus').style.color = 'var(--accent)';
       document.getElementById('statBalance').textContent = balanceEth > 0 ? balanceEth.toFixed(4) + ' ETH' : '0 ETH';
       
-      // Dynamic Classification based on the score
       let classification = 'Dormant';
       if (finalScore >= 80) classification = 'Whale / Power User';
       else if (finalScore >= 50) classification = 'Active Trader';
       else if (finalScore >= 20) classification = 'Casual User';
       
-      document.getElementById('statClass').textContent = classification;
+      statClass.textContent = classification;
 
     } catch (err) {
-      console.error("Etherscan API Error:", err);
-      alert("API Error: " + err.message + "\n\nPlease check if your API key is correct.");
-      scoreEl.textContent = 'ERR';
+      console.error("DEBUG INFO:", err);
+      // Print the exact error into the dashboard UI so we can read it
+      scoreEl.style.fontSize = '14px';
       scoreEl.style.color = 'var(--danger)';
+      scoreEl.textContent = err.message || "Network Error: Check console";
+      statClass.textContent = "ERROR";
     } finally {
       btn.disabled = false;
       btn.textContent = 'Analyze Wallet';
     }
   }
 
-  // Enter key support
   document.getElementById('wallet').addEventListener('keydown', e => {
     if (e.key === 'Enter') checkWallet();
   });
