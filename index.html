@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Wallet Insight | @dukexbt_</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root { 
+    --primary: #7f5af0; 
+    --bg: #020617; 
+    --card-bg: rgba(255,255,255,0.03);
+    --text: #ffffff;
+    --border: rgba(255,255,255,0.1);
+  }
+
+  /* Light Mode Variables */
+  body.light-theme {
+    --bg: #f8fafc;
+    --card-bg: #ffffff;
+    --text: #0f172a;
+    --border: #e2e8f0;
+  }
+
+  body { 
+    margin: 0; 
+    font-family: 'Inter', sans-serif; 
+    background: var(--bg); 
+    color: var(--text); 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    min-height: 100vh; 
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+
+  .theme-toggle {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    padding: 10px;
+    border-radius: 50%;
+    cursor: pointer;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+  }
+
+  .container { 
+    text-align: center; 
+    width: 90%; 
+    max-width: 450px; 
+    padding: 40px; 
+    border-radius: 24px; 
+    background: var(--card-bg); 
+    backdrop-filter: blur(12px); 
+    border: 1px solid var(--border); 
+    box-shadow: 0 20px 50px rgba(0,0,0,0.1); 
+  }
+
+  h1 { font-size: 28px; margin-bottom: 5px; letter-spacing: -1px; }
+  p.subtitle { opacity: 0.6; margin-bottom: 30px; font-size: 14px; }
+
+  input { 
+    width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 12px; 
+    border: 1px solid var(--border); background: rgba(0,0,0,0.05); 
+    color: var(--text); box-sizing: border-box; outline: none; 
+  }
+
+  button { 
+    width: 100%; padding: 15px; border-radius: 12px; border: none; 
+    background: linear-gradient(135deg, #00c6ff, var(--primary)); 
+    color: white; font-weight: 600; cursor: pointer; transition: 0.2s; 
+  }
+
+  .share-btn { background: #000; color: white; margin-top: 15px; display: none; align-items: center; justify-content: center; gap: 8px; }
+  
+  .result { 
+    margin-top: 25px; padding: 20px; border-radius: 16px; 
+    background: rgba(127, 90, 240, 0.1); text-align: left; 
+  }
+
+  .badge { padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; float: right; color: white; }
+  .low { background: #ef4444; } .medium { background: #f59e0b; } .high { background: #10b981; }
+
+  footer { margin-top: 35px; }
+  .profile-img { width: 60px; height: 60px; border-radius: 50%; border: 2px solid var(--primary); margin-bottom: 10px; }
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">
+  <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+</button>
+
+<div class="container">
+  <h1>Wallet Insight</h1>
+  <p class="subtitle">Powered by @dukexbt_</p>
+
+  <input id="wallet" placeholder="Enter ETH Address (0x...)" type="text">
+  <button id="btn" onclick="checkWallet()">Analyze Wallet</button>
+
+  <div id="output" class="result" style="display:none;"></div>
+  
+  <button id="shareBtn" class="share-btn" onclick="shareToX()">
+    Share Result on X
+  </button>
+
+  <footer>
+    <img src="https://unavatar.io/x/dukexbt_" class="profile-img" alt="Duke">
+    <br>
+    <a href="https://x.com/dukexbt_" target="_blank" style="color:var(--primary); text-decoration:none; font-weight:600;">
+      built by @dukexbt_
+    </a>
+  </footer>
+</div>
+
+<script>
+let lastScore = "";
+
+// Theme Logic
+function toggleTheme() {
+  document.body.classList.toggle('light-theme');
+  const isLight = document.body.classList.contains('light-theme');
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+  updateThemeIcon(isLight);
+}
+
+function updateThemeIcon(isLight) {
+  const btn = document.getElementById('themeBtn');
+  btn.innerHTML = isLight 
+    ? '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"></path></svg>'
+    : '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>';
+}
+
+// Load saved theme
+if(localStorage.getItem('theme') === 'light') {
+  document.body.classList.add('light-theme');
+  updateThemeIcon(true);
+}
+
+async function checkWallet() {
+  const address = document.getElementById('wallet').value.trim();
+  const output = document.getElementById('output');
+  const btn = document.getElementById('btn');
+  const shareBtn = document.getElementById('shareBtn');
+
+  if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+    alert('Invalid ETH address');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = 'Fetching Data...';
+  output.style.display = 'block';
+  output.innerHTML = 'Analyzing...';
+
+  try {
+    const apiKey = 'X5DW1ST8FVDT84RKKU3G79EMTUSPW2MXHP';
+    const url = `https://api.etherscan.io/api?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=100&sort=desc&apikey=${apiKey}`;
+
+    const res = await fetch(url);
+    const data = await res.json();
+    const txCount = (data.result || []).length;
+
+    let score = 'low';
+    if (txCount > 20) score = 'medium';
+    if (txCount > 70) score = 'high';
+    lastScore = score.toUpperCase();
+
+    output.innerHTML = `
+      <span class="badge ${score}">${score}</span>
+      <p style="margin:0; font-size:12px; opacity:0.6;">SCORE GENERATED</p>
+      <div style="font-size:14px; margin-top:8px;">
+        <strong>Txs:</strong> ${txCount} | <strong>Level:</strong> ${lastScore}
+      </div>
+    `;
+    shareBtn.style.display = 'flex';
+  } catch (err) {
+    output.innerHTML = 'Error fetching data.';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Analyze Wallet';
+  }
+}
+
+function shareToX() {
+  const text = encodeURIComponent(`I just checked my wallet activity on Wallet Insight! Score: ${lastScore} 🛡️\n\nBuilt by @dukexbt_\nCheck yours: ${window.location.href}`);
+  window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
+}
+</script>
+</body>
+</html>
