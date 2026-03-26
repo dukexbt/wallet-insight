@@ -363,8 +363,8 @@
         <span class="stat-value" id="statStatus">—</span>
       </div>
       <div class="stat">
-        <span class="stat-label">Network</span>
-        <span class="stat-value" id="statNetwork">—</span>
+        <span class="stat-label">ETH Balance</span>
+        <span class="stat-value" id="statBalance">—</span>
       </div>
       <div class="stat">
         <span class="stat-label">Classification</span>
@@ -404,6 +404,7 @@
     const tierBadge = document.getElementById('tierBadge');
     const inp = document.getElementById('wallet');
 
+    // Basic Ethereum Address Validation
     if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
       inp.classList.remove('shake');
       void inp.offsetWidth;
@@ -413,6 +414,7 @@
       return;
     }
 
+    // UI Reset
     btn.disabled = true;
     btn.textContent = 'Scanning...';
     output.style.display = 'block';
@@ -422,34 +424,53 @@
     document.getElementById('timestamp').textContent = new Date().toISOString().slice(11,19) + ' UTC';
     document.getElementById('statTx').textContent = '—';
     document.getElementById('statStatus').textContent = '—';
-    document.getElementById('statNetwork').textContent = '—';
+    document.getElementById('statBalance').textContent = '—';
     document.getElementById('statClass').textContent = '—';
 
     try {
-      const apiKey = 'X5DW1ST8FVDT84RKKU3G79EMTUSPW2MXHP';
-      const url = `https://api.etherscan.io/api?module=proxy&action=eth_getTransactionCount&address=${address}&tag=latest&apikey=${apiKey}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      const txCount = parseInt(data.result, 16) || 0;
+      // NOTE: Using a hardcoded API key in frontend code is generally risky if you care about limits, 
+      // but it works fine for personal/portfolio tools.
+      const apiKey = 'X5DW1ST8FVDT84RKKU3G79EMTUSPW2MXHP'; 
 
-      let base;
-      if (txCount === 0)        base = Math.floor(Math.random() * 15) + 5;
-      else if (txCount < 100)   base = Math.floor(Math.random() * 20) + 45;
-      else if (txCount < 500)   base = Math.floor(Math.random() * 20) + 70;
-      else                      base = Math.floor(Math.random() * 10) + 90;
+      // 1. Fetch Transaction Count
+      const txUrl = `https://api.etherscan.io/api?module=proxy&action=eth_getTransactionCount&address=${address}&tag=latest&apikey=${apiKey}`;
+      const txRes = await fetch(txUrl);
+      const txData = await txRes.json();
+      const txCount = parseInt(txData.result, 16) || 0;
 
-      const finalScore = Math.min(base, 100);
+      // 2. Fetch ETH Balance (Used as our volume/wealth proxy)
+      const balUrl = `https://api.etherscan.io/api?module=account&action=balance&address=${address}&tag=latest&apikey=${apiKey}`;
+      const balRes = await fetch(balUrl);
+      const balData = await balRes.json();
+      const balanceWei = balData.result || 0;
+      const balanceEth = balanceWei / 1e18; // Convert Wei to ETH
+
+      // --- ALGORITHM LOGIC ---
+      // Max 50 points for Transactions + Max 50 points for ETH Balance
+      
+      let txScore = 0;
+      if (txCount >= 500) txScore = 50;
+      else if (txCount >= 50) txScore = 25 + ((txCount - 50) / 450) * 25; // Scales 25-50 points based on activity
+      else txScore = (txCount / 50) * 25;
+
+      let volScore = 0;
+      if (balanceEth >= 10) volScore = 50; 
+      else if (balanceEth >= 1) volScore = 25 + ((balanceEth - 1) / 9) * 25; // Scales 25-50 points based on holdings
+      else volScore = (balanceEth / 1) * 25;
+
+      // Combine and cap between 0 and 100
+      const finalScore = Math.min(Math.max(Math.round(txScore + volScore), 0), 100);
       const tier = getTier(finalScore);
 
       // Animate count-up
       let current = 0;
-      const step = Math.ceil(finalScore / 60);
+      const step = Math.ceil(finalScore / 60) || 1;
       const interval = setInterval(() => {
         current = Math.min(current + step, finalScore);
         scoreEl.textContent = current;
         if (current >= finalScore) {
           clearInterval(interval);
-          // Animate bar + badge
+          // Animate the progress bar and badge
           setTimeout(() => {
             scoreBar.style.width = finalScore + '%';
             scoreEl.style.color = tier.color;
@@ -462,14 +483,24 @@
         }
       }, 18);
 
-      const classifications = ['EOA', 'Power User', 'DeFi Wallet', 'Multi-Sig', 'Trader'];
+      // Populate Stats
       document.getElementById('statTx').textContent = txCount.toLocaleString();
       document.getElementById('statStatus').textContent = 'VERIFIED ✓';
       document.getElementById('statStatus').style.color = 'var(--accent)';
-      document.getElementById('statNetwork').textContent = 'ETH MAINNET';
-      document.getElementById('statClass').textContent = classifications[Math.floor(Math.random() * classifications.length)];
+      
+      // Format balance to keep the UI clean (max 4 decimals)
+      document.getElementById('statBalance').textContent = balanceEth > 0 ? balanceEth.toFixed(4) + ' ETH' : '0 ETH';
+      
+      // Dynamic Classification based on the score
+      let classification = 'Dormant';
+      if (finalScore >= 80) classification = 'Whale / Power User';
+      else if (finalScore >= 50) classification = 'Active Trader';
+      else if (finalScore >= 20) classification = 'Casual User';
+      
+      document.getElementById('statClass').textContent = classification;
 
     } catch (err) {
+      console.error("Etherscan API Error:", err);
       scoreEl.textContent = 'ERR';
       scoreEl.style.color = 'var(--danger)';
     } finally {
