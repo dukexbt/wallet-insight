@@ -1,87 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Wallet Insight — @dukexbt_</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #080b10;
+    --surface: #0d1117;
+    --border: rgba(255,255,255,0.07);
+    --accent: #00ffe0;
+    --accent2: #7b61ff;
+    --text: #e8eaf0;
+    --muted: rgba(232,234,240,0.35);
+    --danger: #ff4d6d;
+    --success: #00ffe0;
+  }
+
+  body {
+    font-family: 'Space Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,224,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,224,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Glow blobs */
+  .blob {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(100px);
+    pointer-events: none;
+    z-index: 0;
+    animation: blobDrift 12s ease-in-out infinite alternate;
+  }
+  .blob-1 { width: 500px; height: 500px; background: rgba(123,97,255,0.12); top: -150px; right: -150px; }
+  .blob-2 { width: 400px; height: 400px; background: rgba(0,255,224,0.07); bottom: -100px; left: -100px; animation-delay: -6s; }
+  @keyframes blobDrift { from { transform: scale(1) translate(0,0); } to { transform: scale(1.15) translate(30px, 20px); } }
+
+  /* Card */
+  .card {
+    position: relative;
+    z-index: 1;
+    width: 90%;
+    max-width: 460px;
+    padding: 48px 40px 40px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    box-shadow: 0 0 0 1px rgba(0,255,224,0.04), 0 32px 64px rgba(0,0,0,0.6);
+    animation: cardIn 0.6s cubic-bezier(.16,1,.3,1) both;
+  }
+  @keyframes cardIn { from { opacity:0; transform: translateY(24px); } to { opacity:1; transform: translateY(0); } }
+
+  /* Corner accents */
+  .card::before, .card::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-color: var(--accent);
+    border-style: solid;
+  }
+  .card::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+  .card::after  { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+  /* Header */
+  .header { margin-bottom: 36px; }
+  .beta-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--accent); border: 1px solid rgba(0,255,224,0.25);
+    padding: 4px 10px; border-radius: 2px; margin-bottom: 16px;
+    font-family: 'Space Mono', monospace;
+  }
+  .beta-tag::before {
+    content: '';
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent);
+    animation: blink 1.4s ease infinite;
+  }
+  @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.2; } }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 34px;
+    font-weight: 800;
+    letter-spacing: -1.5px;
+    line-height: 1;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, #fff 30%, rgba(255,255,255,0.5));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .subtitle {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+  }
+
+  /* Input group */
+  .input-group { position: relative; margin-bottom: 14px; }
+  .input-label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  input {
+    width: 100%;
+    padding: 16px 18px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    letter-spacing: 0.5px;
+  }
+  input::placeholder { color: rgba(255,255,255,0.18); }
+  input:focus {
+    border-color: rgba(0,255,224,0.4);
+    box-shadow: 0 0 0 3px rgba(0,255,224,0.06);
+  }
+
+  /* Button */
+  button {
+    width: 100%;
+    padding: 17px;
+    background: var(--accent);
+    color: #080b10;
+    border: none;
+    border-radius: 3px;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+    text-transform: uppercase;
+    position: relative;
+    overflow: hidden;
+  }
+  button::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.18) 50%, transparent 100%);
+    transform: translateX(-100%);
+    transition: transform 0.5s;
+  }
+  button:hover::after { transform: translateX(100%); }
+  button:hover { opacity: 0.92; box-shadow: 0 0 28px rgba(0,255,224,0.25); }
+  button:active { transform: scale(0.98); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Result panel */
+  .result {
+    display: none;
+    margin-top: 28px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    animation: slideUp 0.4s cubic-bezier(.16,1,.3,1) both;
+  }
+  @keyframes slideUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+
+  .result-header {
+    padding: 14px 20px;
+    background: rgba(0,255,224,0.04);
+    border-bottom: 1px solid var(--border);
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .result-header span:last-child { color: var(--muted); }
+
+  .score-section {
+    padding: 32px 28px 24px;
+    text-align: center;
+    background: rgba(255,255,255,0.01);
+  }
+  .score-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+    display: block;
+  }
+  .score-number {
+    font-family: 'Syne', sans-serif;
+    font-size: 80px;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--accent);
+    display: block;
+    transition: color 0.3s;
+    text-shadow: 0 0 40px rgba(0,255,224,0.3);
+  }
+  .score-bar-wrap {
+    margin-top: 18px;
+    height: 3px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .score-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    border-radius: 99px;
+    transition: width 1.2s cubic-bezier(.16,1,.3,1);
+  }
+  .score-tier {
+    display: inline-block;
+    margin-top: 14px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 2px;
+    font-weight: 700;
+  }
+
+  /* Stats grid */
+  .stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border-top: 1px solid var(--border);
+  }
+  .stat {
+    padding: 18px 22px;
+    background: var(--surface);
+  }
+  .stat-label {
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+    display: block;
+  }
+  .stat-value {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  /* Footer / attribution */
+  .footer {
+    margin-top: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+  .built-label {
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .profile-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    transition: opacity 0.2s;
+  }
+  .profile-link:hover { opacity: 0.75; }
+  .profile-img {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,255,224,0.25);
+    object-fit: cover;
+  }
+  .profile-handle {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.5px;
+  }
+
+  /* Error shake */
+  @keyframes shake {
+    0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)}
+  }
+  .shake { animation: shake 0.4s ease; }
+</style>
+</head>
+<body>
+
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+
+<div class="card">
+  <div class="header">
+    <div class="beta-tag">BETA</div>
+    <h1>Wallet Insight</h1>
+    <p class="subtitle">On-chain reputation scoring — Ethereum Mainnet</p>
+  </div>
+
+  <label class="input-label" for="wallet">ETH Address</label>
+  <div class="input-group">
+    <input id="wallet" placeholder="0x..." type="text" spellcheck="false" autocomplete="off" />
+  </div>
+
+  <button id="btn" onclick="checkWallet()">Analyze Wallet</button>
+
+  <div id="output" class="result">
+    <div class="result-header">
+      <span>// ANALYSIS COMPLETE</span>
+      <span id="timestamp"></span>
+    </div>
+    <div class="score-section">
+      <span class="score-label">Reputation Score</span>
+      <span id="digitScore" class="score-number">0</span>
+      <div class="score-bar-wrap"><div id="scoreBar" class="score-bar"></div></div>
+      <span id="tierBadge" class="score-tier"></span>
+    </div>
+    <div class="stats">
+      <div class="stat">
+        <span class="stat-label">TX Count</span>
+        <span class="stat-value" id="statTx">—</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Status</span>
+        <span class="stat-value" id="statStatus">—</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Network</span>
+        <span class="stat-value" id="statNetwork">—</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Classification</span>
+        <span class="stat-value" id="statClass">—</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span class="built-label">System Design</span>
+    <a href="https://x.com/dukexbt_" target="_blank" class="profile-link">
+      <img src="https://unavatar.io/x/dukexbt_" class="profile-img" alt="dukexbt_" />
+      <span class="profile-handle">@dukexbt_</span>
+    </a>
+  </div>
+</div>
+
 <script>
-async function checkWallet() {
-  const address = document.getElementById('wallet').value.trim();
-  const output = document.getElementById('output');
-  const btn = document.getElementById('btn');
-  const scoreEl = document.getElementById('digitScore');
-  const scoreBar = document.getElementById('scoreBar');
-  const tierBadge = document.getElementById('tierBadge');
-  const inp = document.getElementById('wallet');
+  const TIER_CONFIG = [
+    { min: 0,  max: 20,  label: 'DORMANT',   color: '#ff4d6d', bg: 'rgba(255,77,109,0.12)' },
+    { min: 21, max: 44,  label: 'EMERGING',  color: '#ffb347', bg: 'rgba(255,179,71,0.12)' },
+    { min: 45, max: 69,  label: 'ACTIVE',    color: '#7b61ff', bg: 'rgba(123,97,255,0.14)' },
+    { min: 70, max: 89,  label: 'STRONG',    color: '#00ffe0', bg: 'rgba(0,255,224,0.12)' },
+    { min: 90, max: 100, label: 'ELITE',     color: '#ffffff', bg: 'rgba(255,255,255,0.1)' },
+  ];
 
-  if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
-    inp.classList.remove('shake');
-    void inp.offsetWidth;
-    inp.classList.add('shake');
-    return;
+  function getTier(score) {
+    return TIER_CONFIG.find(t => score >= t.min && score <= t.max) || TIER_CONFIG[0];
   }
 
-  btn.disabled = true;
-  btn.textContent = 'Scanning...';
-  output.style.display = 'block';
+  async function checkWallet() {
+    const address = document.getElementById('wallet').value.trim();
+    const output = document.getElementById('output');
+    const btn = document.getElementById('btn');
+    const scoreEl = document.getElementById('digitScore');
+    const scoreBar = document.getElementById('scoreBar');
+    const tierBadge = document.getElementById('tierBadge');
+    const inp = document.getElementById('wallet');
 
-  try {
-    const apiKey = "EZDX5VYQSFZ7X9RIPUKFKIZF98Q6QJ7UE6";
-
-    const url = `https://api.etherscan.io/api?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&sort=asc&apikey=${apiKey}`;
-    const res = await fetch(url);
-    const data = await res.json();
-
-    // 🚨 SAFE CHECK
-    if (data.status !== "1" || !Array.isArray(data.result)) {
-      throw new Error("Invalid API response");
+    if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+      inp.classList.remove('shake');
+      void inp.offsetWidth;
+      inp.classList.add('shake');
+      inp.style.borderColor = 'rgba(255,77,109,0.5)';
+      setTimeout(() => { inp.style.borderColor = ''; inp.classList.remove('shake'); }, 600);
+      return;
     }
 
-    const txs = data.result;
-    const txCount = txs.length;
+    btn.disabled = true;
+    btn.textContent = 'Scanning...';
+    output.style.display = 'block';
+    document.getElementById('timestamp').textContent = new Date().toISOString().slice(11,19) + ' UTC';
 
-    // Volume
-    let totalVolume = 0;
-    for (let tx of txs) {
-      totalVolume += Number(tx.value) / 1e18;
+    try {
+      // 👇 PASTE YOUR API KEY HERE INSIDE THE QUOTES 👇
+      const apiKey = "EZDX5VYQSFZ7X9RIPUKFKIZF98Q6QJ7UE6";
+
+      const url = `https://api.etherscan.io/api?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&sort=asc&apikey=${apiKey}`;
+      const res = await fetch(url);
+      const data = await res.json();
+
+      // Handle Etherscan Errors properly
+      if (data.status === "0" && data.message !== "No transactions found") {
+        throw new Error(data.result);
+      }
+
+      // Ensure txs is an array even if empty
+      const txs = (data.result && Array.isArray(data.result)) ? data.result : [];
+      const txCount = txs.length;
+
+      // Volume & Age Calculations
+      let totalVolume = 0;
+      let walletAgeDays = 0;
+
+      if (txCount > 0) {
+        // Loop to calculate total ETH moved
+        for (let tx of txs) {
+          totalVolume += Number(tx.value) / 1e18;
+        }
+        // Calculate age based on the first transaction timestamp
+        const firstTx = txs[0];
+        walletAgeDays = (Date.now() / 1000 - Number(firstTx.timeStamp)) / 86400;
+      }
+
+      // Score Algorithm
+      let score = 0;
+      score += Math.min(txCount / 200, 1) * 25;
+      score += Math.min(totalVolume / 100, 1) * 35;
+      score += Math.min(walletAgeDays / 365, 1) * 20;
+      if (txCount > 300 && totalVolume > 50) score += 20;
+
+      const finalScore = Math.round(Math.min(score, 100));
+      const tier = getTier(finalScore);
+
+      // UI update
+      scoreEl.textContent = finalScore;
+      scoreBar.style.width = finalScore + '%';
+      scoreEl.style.fontSize = '80px';
+      scoreEl.style.color = tier.color;
+
+      tierBadge.textContent = tier.label;
+      tierBadge.style.color = tier.color;
+      tierBadge.style.background = tier.bg;
+      tierBadge.style.border = `1px solid ${tier.color}44`;
+
+      document.getElementById('statTx').textContent = txCount.toLocaleString();
+      document.getElementById('statStatus').textContent = 'VERIFIED ✓';
+      document.getElementById('statStatus').style.color = 'var(--success)';
+      document.getElementById('statNetwork').textContent = 'ETH MAINNET';
+      
+      document.getElementById('statClass').textContent = 
+        totalVolume > 100 ? "Whale" : 
+        txCount > 300 ? "Power User" : 
+        "EOA";
+
+    } catch (err) {
+      console.error("DEBUG ERROR:", err);
+
+      scoreEl.textContent = 'ERR';
+      scoreEl.style.fontSize = '40px'; 
+      scoreEl.style.color = 'var(--danger)';
+      
+      const statusEl = document.getElementById('statStatus');
+      statusEl.textContent = 'API ERROR';
+      statusEl.style.color = 'var(--danger)';
+      
+      alert("API Error: " + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Analyze Wallet';
     }
-
-    // Age
-    const firstTx = txs[0];
-    const walletAgeDays = firstTx
-      ? (Date.now()/1000 - Number(firstTx.timeStamp)) / 86400
-      : 0;
-
-    // Score
-    let score = 0;
-    score += Math.min(txCount / 200, 1) * 25;
-    score += Math.min(totalVolume / 100, 1) * 35;
-    score += Math.min(walletAgeDays / 365, 1) * 20;
-    if (txCount > 300 && totalVolume > 50) score += 20;
-
-    const finalScore = Math.round(Math.min(score, 100));
-    const tier = getTier(finalScore);
-
-    // UI update (no animation first — keep stable)
-    scoreEl.textContent = finalScore;
-    scoreBar.style.width = finalScore + '%';
-
-    tierBadge.textContent = tier.label;
-    tierBadge.style.color = tier.color;
-    tierBadge.style.background = tier.bg;
-
-    document.getElementById('statTx').textContent = txCount.toLocaleString();
-    document.getElementById('statStatus').textContent = 'VERIFIED ✓';
-    document.getElementById('statNetwork').textContent = 'ETH MAINNET';
-    document.getElementById('statClass').textContent =
-      totalVolume > 100 ? "Whale" :
-      txCount > 300 ? "Power User" :
-      "EOA";
-
-  } catch (err) {
-    console.error(err);
-
-    // 👇 SHOW ERROR IN UI INSTEAD OF CRASH
-    scoreEl.textContent = '0';
-    document.getElementById('statStatus').textContent = 'API ERROR';
-    document.getElementById('statStatus').style.color = 'var(--danger)';
   }
 
-  btn.disabled = false;
-  btn.textContent = 'Analyze Wallet';
-}
+  // Enter key support
+  document.getElementById('wallet').addEventListener('keydown', e => {
+    if (e.key === 'Enter') checkWallet();
+  });
 </script>
+</body>
+</html>
