@@ -6,107 +6,134 @@
 <title>Wallet Insight | @dukexbt_</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
-  :root { --primary: #7f5af0; --accent: #00c6ff; --bg: #020617; }
-  body { 
-    margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: white; 
-    display: flex; justify-content: center; align-items: center; min-height: 100vh; 
-    overflow: hidden; perspective: 1000px;
-  }
-  .bg-animate {
-    position: absolute; width: 100%; height: 100%;
-    background: linear-gradient(45deg, #0f172a, #020617, #1e1b4b, #020617);
-    background-size: 400% 400%; animation: gradientBG 15s ease infinite; z-index: -1;
-  }
-  @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-  .container { 
-    text-align: center; width: 90%; max-width: 420px; padding: 40px; border-radius: 32px; 
-    background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px); 
-    border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    transform-style: preserve-3d;
-  }
-  h1 { font-size: 32px; margin-bottom: 5px; font-weight: 600; letter-spacing: -1.5px; }
-  .subtitle { opacity: 0.5; margin-bottom: 30px; font-size: 13px; }
-  input { 
-    width: 100%; padding: 16px; margin-bottom: 15px; border-radius: 16px; 
-    border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(0,0,0,0.3); 
-    color: white; box-sizing: border-box; outline: none; transition: 0.3s;
-  }
-  input:focus { border-color: var(--accent); box-shadow: 0 0 15px rgba(0, 198, 255, 0.2); }
-  button { 
-    width: 100%; padding: 16px; border-radius: 16px; border: none; 
-    background: linear-gradient(135deg, var(--accent), var(--primary)); 
-    color: white; font-weight: 700; cursor: pointer; 
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  }
-  button:hover { transform: scale(1.05); box-shadow: 0 15px 30px rgba(127, 90, 240, 0.4); filter: brightness(1.1); }
-  button:active { transform: scale(0.95); }
-  .result { 
-    margin-top: 25px; padding: 25px; border-radius: 20px; 
-    background: rgba(127, 90, 240, 0.15); border: 1px solid rgba(127, 90, 240, 0.3);
-    display: none; animation: slideUp 0.5s ease-out;
-  }
-  .score-display { 
-    font-size: 52px; font-weight: 800; color: var(--accent); 
-    margin: 10px 0; text-shadow: 0 0 20px rgba(0, 198, 255, 0.5);
-  }
-  @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-  footer { margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; }
-  .profile-img { width: 65px; height: 65px; border-radius: 50%; border: 2px solid var(--primary); margin-bottom: 10px; transition: 0.5s; }
-  .profile-img:hover { transform: rotate(360deg) scale(1.1); }
+:root {
+  --primary:#7f5af0; --accent:#00c6ff; --bg:#020617;
+  --circle-bg:#222238;
+}
+body{
+  margin:0; font-family:'Inter',sans-serif;
+  background: linear-gradient(135deg,#020617,#0b0c17,#1e1b4b);
+  color:white; display:flex; justify-content:center; align-items:center; min-height:100vh;
+}
+.bg-animate{
+  position:absolute;width:100%;height:100%;
+  background:linear-gradient(45deg,#0f172a,#020617,#1e1b4b,#020617);
+  background-size:400% 400%;
+  animation:gradientBG 15s ease infinite; z-index:-1;
+}
+@keyframes gradientBG{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+
+.container{
+  width:90%; max-width:450px; padding:40px; border-radius:32px;
+  background:rgba(255,255,255,0.05); backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,0.1); box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);
+  text-align:center;
+}
+h1{ font-size:32px; margin-bottom:5px; font-weight:600;}
+.subtitle{ opacity:0.6; margin-bottom:25px; font-size:13px;}
+
+input{ width:100%; padding:16px; margin-bottom:15px; border-radius:16px;
+  border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.25); color:white; outline:none; font-size:14px;}
+input:focus{ border-color:var(--accent); box-shadow:0 0 15px rgba(0,198,255,0.2); }
+
+button{ width:100%; padding:16px; border-radius:16px; border:none;
+  background: linear-gradient(135deg,var(--accent),var(--primary));
+  font-weight:700; cursor:pointer; color:white; transition:0.3s all;}
+button:hover{ transform:scale(1.05);}
+button:active{ transform:scale(0.95);}
+
+.result{ margin-top:25px; display:none;}
+#score-circle{ width:200px; height:200px; margin:20px auto; position:relative;}
+#score-circle svg{ transform:rotate(-90deg);}
+#score-circle circle{ fill:none; stroke-width:15; stroke-linecap:round; }
+#score-text{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  font-size:48px; font-weight:800; color:var(--accent); text-shadow:0 0 20px rgba(0,198,255,0.5);}
+#rank-badge{ margin-top:10px; font-weight:700; font-size:16px; padding:6px 16px; border-radius:12px; display:inline-block;}
+
+footer{ margin-top:30px; border-top:1px solid rgba(255,255,255,0.1); padding-top:20px;}
+.profile-img{ width:65px; height:65px; border-radius:50%; border:2px solid var(--primary); margin-bottom:10px; transition:0.5s;}
+.profile-img:hover{ transform: rotate(360deg) scale(1.1);}
 </style>
 </head>
 <body>
+
 <div class="bg-animate"></div>
+
 <div class="container" id="card">
   <h1>Wallet Insight</h1>
-  <p class="subtitle">Next-gen Metrics by @dukexbt_</p>
+  <p class="subtitle">Next-Gen On-Chain Score by @dukexbt_</p>
+
   <input id="wallet" placeholder="Paste ETH Address..." type="text">
   <button id="btn" onclick="checkWallet()">Analyze Activity</button>
+
   <div id="output" class="result">
-    <p style="margin:0; font-size:12px; opacity:0.6; letter-spacing:1px;">TXN INSIGHT SCORE</p>
-    <span id="digitScore" class="score-display">0</span>
-    <div id="details" style="font-size:14px; opacity:0.9;"></div>
+    <div id="score-circle">
+      <svg width="200" height="200">
+        <circle cx="100" cy="100" r="90" stroke="var(--circle-bg)"></circle>
+        <circle id="score-progress" cx="100" cy="100" r="90" stroke="var(--accent)" stroke-dasharray="565.48" stroke-dashoffset="565.48"></circle>
+      </svg>
+      <div id="score-text">0</div>
+    </div>
+    <div id="rank-badge">Newcomer</div>
   </div>
+
   <footer>
     <img src="https://unavatar.io/x/dukexbt_" class="profile-img" alt="Duke">
     <br>
     <a href="https://x.com/dukexbt_" target="_blank" style="color:var(--accent); text-decoration:none; font-weight:600;">built by @dukexbt_</a>
   </footer>
 </div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.7.0/vanilla-tilt.min.js"></script>
 <script>
-  VanillaTilt.init(document.querySelector("#card"), { max: 10, speed: 400, glare: true, "max-glare": 0.2 });
-  async function checkWallet() {
-    const address = document.getElementById('wallet').value.trim();
-    const output = document.getElementById('output');
-    const btn = document.getElementById('btn');
-    const scoreText = document.getElementById('digitScore');
-    const details = document.getElementById('details');
-    if (!/^0x[a-fA-F0-9]{40}$/.test(address)) { alert('Invalid Address'); return; }
-    btn.disabled = true; btn.innerHTML = 'Scanning Mainnet...';
-    output.style.display = 'block'; scoreText.innerHTML = '0';
-    try {
-      const apiKey = 'X5DW1ST8FVDT84RKKU3G79EMTUSPW2MXHP';
-      const url = `https://api.etherscan.io/api?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=1000&sort=desc&apikey=${apiKey}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      let txCount = (data.status === "1" && Array.isArray(data.result)) ? data.result.length : 0;
-      
-      // CALIBRATED SQUARE ROOT LOGIC
-      let finalScore = txCount === 0 ? 0 : Math.min(Math.round(Math.sqrt(txCount) * 3.16), 100);
+VanillaTilt.init(document.querySelector("#card"), { max: 10, speed: 400, glare: true, "max-glare": 0.2 });
 
-      let current = 0;
-      if(finalScore === 0) { scoreText.innerHTML = "0"; } 
-      else {
-          const interval = setInterval(() => {
-            if (current >= finalScore) { scoreText.innerHTML = finalScore; clearInterval(interval); }
-            else { current++; scoreText.innerHTML = current; }
-          }, 15);
-      }
-      details.innerHTML = txCount === 0 ? "Zero activity detected." : `Found <b>${txCount}</b> transactions. <br> Level: ${txCount > 250 ? 'Power User' : 'Standard'}`;
-    } catch (err) { scoreText.innerHTML = '!!'; }
-    finally { btn.disabled = false; btn.innerHTML = 'Analyze Activity'; }
-  }
+async function checkWallet(){
+  const address=document.getElementById('wallet').value.trim();
+  const btn=document.getElementById('btn');
+  const output=document.getElementById('output');
+  const scoreText=document.getElementById('score-text');
+  const rankBadge=document.getElementById('rank-badge');
+
+  if(!/^0x[a-fA-F0-9]{40}$/.test(address)){ alert('Invalid ETH address'); return; }
+
+  btn.disabled=true; btn.innerText='Fetching...'; output.style.display='block'; scoreText.innerText='0'; rankBadge.innerText='...';
+
+  try{
+    const apiKey='X5DW1ST8FVDT84RKKU3G79EMTUSPW2MXHP'; // <-- Replace with yours
+    const url=`https://api.etherscan.io/api?module=proxy&action=eth_getTransactionCount&address=${address}&tag=latest&apikey=${apiKey}`;
+    const res=await fetch(url); const data=await res.json();
+    const txCount=parseInt(data.result,16)||0;
+
+    // Score Calculation: log scale + random uniqueness
+    let baseScore = txCount===0?0:Math.min(Math.round(20*Math.log10(txCount+1)),90);
+    let randomBoost = txCount===0?0:Math.floor(Math.random()*10);
+    const finalScore=Math.min(baseScore+randomBoost,100);
+
+    // Animate number & circle
+    let current=0;
+    const circle=document.getElementById('score-progress');
+    const radius=90;
+    const circumference=2*Math.PI*radius;
+    const interval=setInterval(()=>{
+      current++; if(current>=finalScore){ current=finalScore; clearInterval(interval);}
+      scoreText.innerText=current;
+      const offset=circumference-(current/100)*circumference;
+      circle.style.strokeDashoffset=offset;
+    },10);
+
+    // Rank badge
+    let rank="Newcomer";
+    if(txCount>10) rank="Active Citizen";
+    if(txCount>50) rank="On-Chain Expert";
+    if(txCount>200) rank="Mainnet Whale";
+    if(txCount>1000) rank="Legendary Whale";
+    rankBadge.innerText=rank;
+
+  }catch(e){ console.error(e); scoreText.innerText='!!'; rankBadge.innerText='Error';}
+  finally{ btn.disabled=false; btn.innerText='Analyze Activity';}
+}
 </script>
+
 </body>
 </html>
