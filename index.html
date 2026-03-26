@@ -12,8 +12,6 @@ async function checkWallet() {
     inp.classList.remove('shake');
     void inp.offsetWidth;
     inp.classList.add('shake');
-    inp.style.borderColor = 'rgba(255,77,109,0.5)';
-    setTimeout(() => { inp.style.borderColor = ''; inp.classList.remove('shake'); }, 600);
     return;
   }
 
@@ -21,111 +19,69 @@ async function checkWallet() {
   btn.textContent = 'Scanning...';
   output.style.display = 'block';
 
-  scoreEl.textContent = '—';
-  scoreBar.style.width = '0%';
-  tierBadge.textContent = '';
-
-  document.getElementById('timestamp').textContent =
-    new Date().toISOString().slice(11,19) + ' UTC';
-
-  document.getElementById('statTx').textContent = '—';
-  document.getElementById('statStatus').textContent = '—';
-  document.getElementById('statNetwork').textContent = '—';
-  document.getElementById('statClass').textContent = '—';
-
   try {
     const apiKey = "EZDX5VYQSFZ7X9RIPUKFKIZF98Q6QJ7UE6";
 
-    // 1. Get ALL transactions
     const url = `https://api.etherscan.io/api?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&sort=asc&apikey=${apiKey}`;
     const res = await fetch(url);
     const data = await res.json();
 
-    if (!data.result || data.result.length === 0) {
-      throw new Error("No transactions found");
+    // 🚨 SAFE CHECK
+    if (data.status !== "1" || !Array.isArray(data.result)) {
+      throw new Error("Invalid API response");
     }
 
     const txs = data.result;
     const txCount = txs.length;
 
-    // 2. Calculate total volume
+    // Volume
     let totalVolume = 0;
-    txs.forEach(tx => {
-      const eth = parseFloat(tx.value) / 1e18;
-      totalVolume += eth;
-    });
+    for (let tx of txs) {
+      totalVolume += Number(tx.value) / 1e18;
+    }
 
-    // 3. Wallet age
+    // Age
     const firstTx = txs[0];
     const walletAgeDays = firstTx
-      ? (Date.now()/1000 - parseInt(firstTx.timeStamp)) / 86400
+      ? (Date.now()/1000 - Number(firstTx.timeStamp)) / 86400
       : 0;
 
-    // 4. SCORING SYSTEM
+    // Score
     let score = 0;
-
-    // TX count (25 max)
     score += Math.min(txCount / 200, 1) * 25;
-
-    // Volume (35 max)
     score += Math.min(totalVolume / 100, 1) * 35;
-
-    // Age (20 max)
     score += Math.min(walletAgeDays / 365, 1) * 20;
-
-    // Activity bonus (20 max)
     if (txCount > 300 && totalVolume > 50) score += 20;
 
     const finalScore = Math.round(Math.min(score, 100));
-
-    // ===== YOUR EXISTING TIER SYSTEM =====
     const tier = getTier(finalScore);
 
-    // Animate number
-    let current = 0;
-    const step = Math.ceil(finalScore / 60);
+    // UI update (no animation first — keep stable)
+    scoreEl.textContent = finalScore;
+    scoreBar.style.width = finalScore + '%';
 
-    const interval = setInterval(() => {
-      current = Math.min(current + step, finalScore);
-      scoreEl.textContent = current;
+    tierBadge.textContent = tier.label;
+    tierBadge.style.color = tier.color;
+    tierBadge.style.background = tier.bg;
 
-      if (current >= finalScore) {
-        clearInterval(interval);
-
-        setTimeout(() => {
-          scoreBar.style.width = finalScore + '%';
-
-          scoreEl.style.color = tier.color;
-          scoreEl.style.textShadow = `0 0 40px ${tier.color}55`;
-
-          tierBadge.textContent = tier.label;
-          tierBadge.style.color = tier.color;
-          tierBadge.style.background = tier.bg;
-          tierBadge.style.border = `1px solid ${tier.color}44`;
-        }, 80);
-      }
-    }, 18);
-
-    // Classification logic (basic)
-    let classification = "EOA";
-    if (txCount > 500) classification = "Power User";
-    if (totalVolume > 100) classification = "Whale";
-    if (txCount > 200 && totalVolume > 50) classification = "Trader";
-
-    // Update UI
     document.getElementById('statTx').textContent = txCount.toLocaleString();
     document.getElementById('statStatus').textContent = 'VERIFIED ✓';
-    document.getElementById('statStatus').style.color = 'var(--accent)';
     document.getElementById('statNetwork').textContent = 'ETH MAINNET';
-    document.getElementById('statClass').textContent = classification;
+    document.getElementById('statClass').textContent =
+      totalVolume > 100 ? "Whale" :
+      txCount > 300 ? "Power User" :
+      "EOA";
 
   } catch (err) {
-    scoreEl.textContent = 'ERR';
-    scoreEl.style.color = 'var(--danger)';
     console.error(err);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Analyze Wallet';
+
+    // 👇 SHOW ERROR IN UI INSTEAD OF CRASH
+    scoreEl.textContent = '0';
+    document.getElementById('statStatus').textContent = 'API ERROR';
+    document.getElementById('statStatus').style.color = 'var(--danger)';
   }
+
+  btn.disabled = false;
+  btn.textContent = 'Analyze Wallet';
 }
 </script>
