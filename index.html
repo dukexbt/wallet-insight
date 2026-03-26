@@ -20,7 +20,7 @@
   @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
   .container { 
     text-align: center; width: 90%; max-width: 420px; padding: 40px; border-radius: 32px; 
-    background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(25px); 
+    background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px); 
     border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     transform-style: preserve-3d;
   }
@@ -39,13 +39,14 @@
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }
   button:hover { transform: scale(1.05); box-shadow: 0 15px 30px rgba(127, 90, 240, 0.4); filter: brightness(1.1); }
+  button:active { transform: scale(0.95); }
   .result { 
     margin-top: 25px; padding: 25px; border-radius: 20px; 
     background: rgba(127, 90, 240, 0.15); border: 1px solid rgba(127, 90, 240, 0.3);
     display: none; animation: slideUp 0.5s ease-out;
   }
   .score-display { 
-    font-size: 56px; font-weight: 800; color: var(--accent); 
+    font-size: 52px; font-weight: 800; color: var(--accent); 
     margin: 10px 0; text-shadow: 0 0 20px rgba(0, 198, 255, 0.5);
   }
   @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -58,11 +59,11 @@
 <div class="bg-animate"></div>
 <div class="container" id="card">
   <h1>Wallet Insight</h1>
-  <p class="subtitle">Mainnet Precision by @dukexbt_</p>
+  <p class="subtitle">Next-gen Metrics by @dukexbt_</p>
   <input id="wallet" placeholder="Paste ETH Address..." type="text">
   <button id="btn" onclick="checkWallet()">Analyze Activity</button>
   <div id="output" class="result">
-    <p style="margin:0; font-size:11px; opacity:0.6; letter-spacing:1px;">DYNAMIC INSIGHT SCORE</p>
+    <p style="margin:0; font-size:12px; opacity:0.6; letter-spacing:1px;">TXN INSIGHT SCORE</p>
     <span id="digitScore" class="score-display">0</span>
     <div id="details" style="font-size:14px; opacity:0.9;"></div>
   </div>
@@ -82,31 +83,27 @@
     const scoreText = document.getElementById('digitScore');
     const details = document.getElementById('details');
     if (!/^0x[a-fA-F0-9]{40}$/.test(address)) { alert('Invalid Address'); return; }
-    btn.disabled = true; btn.innerHTML = 'Querying Mainnet...';
+    btn.disabled = true; btn.innerHTML = 'Scanning Mainnet...';
     output.style.display = 'block'; scoreText.innerHTML = '0';
     try {
       const apiKey = 'X5DW1ST8FVDT84RKKU3G79EMTUSPW2MXHP';
-      const url = `https://api.etherscan.io/api?module=proxy&action=eth_getTransactionCount&address=${address}&tag=latest&apikey=${apiKey}`;
+      const url = `https://api.etherscan.io/api?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=1000&sort=desc&apikey=${apiKey}`;
       const res = await fetch(url);
       const data = await res.json();
-      let txCount = parseInt(data.result, 16) || 0;
+      let txCount = (data.status === "1" && Array.isArray(data.result)) ? data.result.length : 0;
       
-      // NATURAL LOG SCALING (Aggressive & Decent)
-      // Every single transaction moves the needle
-      let finalScore = txCount === 0 ? 0 : Math.min(Math.round(22 * Math.log(txCount + 1)), 100);
+      // CALIBRATED SQUARE ROOT LOGIC
+      let finalScore = txCount === 0 ? 0 : Math.min(Math.round(Math.sqrt(txCount) * 3.16), 100);
 
       let current = 0;
-      const interval = setInterval(() => {
-        if (current >= finalScore) { scoreText.innerHTML = finalScore; clearInterval(interval); }
-        else { current++; scoreText.innerHTML = current; }
-      }, 15);
-
-      let rank = "Newcomer";
-      if (txCount > 5) rank = "On-Chain Explorer";
-      if (txCount > 25) rank = "Active Citizen";
-      if (txCount > 100) rank = "Mainnet Legend";
-
-      details.innerHTML = `Found <b>${txCount}</b> sent transactions. <br> Status: ${rank}`;
+      if(finalScore === 0) { scoreText.innerHTML = "0"; } 
+      else {
+          const interval = setInterval(() => {
+            if (current >= finalScore) { scoreText.innerHTML = finalScore; clearInterval(interval); }
+            else { current++; scoreText.innerHTML = current; }
+          }, 15);
+      }
+      details.innerHTML = txCount === 0 ? "Zero activity detected." : `Found <b>${txCount}</b> transactions. <br> Level: ${txCount > 250 ? 'Power User' : 'Standard'}`;
     } catch (err) { scoreText.innerHTML = '!!'; }
     finally { btn.disabled = false; btn.innerHTML = 'Analyze Activity'; }
   }
