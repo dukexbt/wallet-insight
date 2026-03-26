@@ -1,1 +1,52 @@
-const url = `https://api.etherscan.io/v2/api?chainid=1&module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&sort=asc&apikey=${apiKey}`;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet Insight</title>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Wallet Insight</h1>
+        </header>
+        <main>
+            <h2>Your Wallet Information</h2>
+            <div id="wallet-info">Loading balance...</div> 
+        </main>
+    </div>
+    
+    <script>
+        // 1. A real wallet address (Vitalik's address for testing)
+        const walletAddress = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045'; 
+        
+        // 👇 2. PASTE YOUR REAL ETHERSCAN API KEY HERE 👇
+        const apiKey = 'EZDX5VYQSFZ7X9RIPUKFKIZF98Q6QJ7UE6'; 
+
+        // 3. Your updated V2 API URL (Mobile CORS Fix)
+        const url = `https://api.etherscan.io/v2/api?chainid=1&module=account&action=balance&address=${walletAddress}&tag=latest&apikey=${apiKey}`;
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                // Check if Etherscan successfully returned the data
+                if (data.status === "1") {
+                    // 4. Convert Wei to ETH
+                    const balanceInWei = data.result;
+                    const balanceInEth = balanceInWei / 1e18; 
+                    
+                    // Update the screen (rounded to 4 decimal places for a clean UI)
+                    document.getElementById('wallet-info').innerText = `Balance: ${balanceInEth.toFixed(4)} ETH`;
+                } else {
+                    // If Etherscan rejects the API key, print the exact reason to the screen
+                    document.getElementById('wallet-info').innerText = `API Error: ${data.result}`;
+                }
+            })
+            .catch(err => {
+                // If the network fails entirely, show it on screen
+                console.error("Network Error:", err);
+                document.getElementById('wallet-info').innerText = "Network Error. Check console.";
+            });
+    </script>
+</body>
+</html>
